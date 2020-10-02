@@ -2,3 +2,4 @@
 weights/kitti.weights
 weights/yolov3-kitti.weights
 __pycache__
+output/*
