@@ -86,18 +86,21 @@ for batch_i, (img_paths, input_imgs) in enumerate(dataloader):
     img_detections.extend(detections)
 
 # Bounding-box colors
-#cmap = plt.get_cmap('tab20b')
-cmap = plt.get_cmap('Vega20b')
+cmap = plt.get_cmap('tab20b')
+#cmap = plt.get_cmap('Vega20b')
 colors = [cmap(i) for i in np.linspace(0, 1, 20)]
 
 print ('\nSaving images:')
 # Iterate through images and save plot of detections
 for img_i, (path, detections) in enumerate(zip(imgs, img_detections)):
 
-    print ("(%d) Image: '%s'" % (img_i, path))
 
     # Create plot
     img = np.array(Image.open(path))
+
+    width = img.shape[1]
+    height = img.shape[0]
+
     plt.figure()
     fig, ax = plt.subplots(1)
     ax.imshow(img)
@@ -113,6 +116,7 @@ for img_i, (path, detections) in enumerate(zip(imgs, img_detections)):
     unpad_h = kitti_img_size - pad_y
     unpad_w = kitti_img_size - pad_x
 
+    print ("(%d) Image: '%s'" % (img_i, path))
     # Draw bounding boxes and labels of detections
     if detections is not None:
         print(type(detections))
@@ -121,13 +125,19 @@ for img_i, (path, detections) in enumerate(zip(imgs, img_detections)):
         n_cls_preds = len(unique_labels)
         bbox_colors = random.sample(colors, n_cls_preds)
         for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-
-            print ('\t+ Label: %s, Conf: %.5f' % (classes[int(cls_pred)], cls_conf.item()))
             # Rescale coordinates to original dimensions
             box_h = int(((y2 - y1) / unpad_h) * (img.shape[0]))
             box_w = int(((x2 - x1) / unpad_w) * (img.shape[1]) )
             y1 = int(((y1 - pad_y // 2) / unpad_h) * (img.shape[0]))
             x1 = int(((x1 - pad_x // 2) / unpad_w) * (img.shape[1]))
+
+            center_x = (x1+box_w/2)/width
+            center_y = (y1+box_h/2)/height
+            rel_w = box_w/width
+            rel_h = box_h/height
+            print ('%s: Label: %s, Conf: %.5f, %.5f %.5f %.5f %.5f' % (path, classes[int(cls_pred)], cls_conf.item(), center_x, center_y, rel_w, rel_h))
+
+
 
             color = bbox_colors[int(np.where(unique_labels == int(cls_pred))[0])]
             # Create a Rectangle patch
